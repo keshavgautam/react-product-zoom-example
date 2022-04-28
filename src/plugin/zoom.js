@@ -1,54 +1,47 @@
 import React, { PropTypes, useEffect, useState } from "react";
 import "./zoom.css";
 import Style from "./style";
-
-function LeftButton() {
-  return (
-    <svg
-      width="8"
-      height="15"
-      viewBox="0 0 16 27"
-      xmlns="http://www.w3.org/2000/svg"
-      class="_1YdSSj"
-    >
-      <path
-        d="M16 23.207L6.11 13.161 16 3.093 12.955 0 0 13.161l12.955 13.161z"
-        fill="#000"
-        class=""
-      ></path>
-    </svg>
-  );
-}
-
-function RightButton() {
-  return (
-    <svg
-      width="14.6"
-      height="24"
-      viewBox="0 0 16 27"
-      xmlns="http://www.w3.org/2000/svg"
-      class="_1xtBwk"
-    >
-      <path
-        d="M16 23.207L6.11 13.161 16 3.093 12.955 0 0 13.161l12.955 13.161z"
-        fill="#000"
-        class="_23HYg_"
-      ></path>
-    </svg>
-  );
-}
-
+import LeftButton from "./components/LeftButton";
+import RightButton from "./components/RightButton";
 function Zoom(props) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [lensStyle, setlensStyle] = useState({
+    width: 100,
+    height: 100,
+    top: 0,
+    left: 0,
+  });
+  const [theaterStyle, setTheaterStyle] = useState({
+    width: 100,
+    height: 100,
+    top: 0,
+    left: 0,
+  });
+  const [theaterStyle1, setTheaterStyle1] = useState({
+    width: 100,
+    height: 100,
+    top: 0,
+    left: 0,
+  });
+  useEffect(() => {
+    // console.log(props);
+  });
   const getSmallImage = () => {
+    return props.images[activeIndex].small;
+  };
+  const getBigImage = () => {
     return props.images[activeIndex].small;
   };
   const getTranslate = () => {
     var a = activeIndex * props.size.thumb + 5;
     var b = 0;
     if (props.size.small < a) {
-      b = props.size.small / 2;
+      b = props.size.small / 2 + (props.size.thumb * a) / props.size.small;
     }
+    if (b > props.size.small / 2) {
+      b = props.size.small + activeIndex * 5;
+    }
+    // console.log(b, "activeIndex=>", activeIndex, "a=>", a);
     return -b;
   };
 
@@ -64,18 +57,100 @@ function Zoom(props) {
       setActiveIndex(a);
     }
   };
+  const showTheater = (e) => {
+    let lensleft = e.clientX;
+    let lenstop = e.clientY;
+    let windowiInnerHeight =
+      window.innerHeight > 600 ? 600 : window.innerHeight;
+    let windowiInnerWidth = window.innerWidth > 1000 ? 1000 : window.innerWidth;
+    windowiInnerWidth -= props.size.small;
+    let left = props.size.small;
+    let theater = { ...theaterStyle };
+    let theater1 = { ...theaterStyle1 };
+    //width
+    theater.width = windowiInnerWidth;
+    theater.height = windowiInnerHeight;
+    //left
+    theater.left = left;
+    theater.top = 0;
+    theater1.backgroundImage = `url('${getBigImage()}')`;
+    theater1.transform = `translate3d(${lensleft}px, ${lenstop}px, 29px)`;
 
-  useEffect(() => {
-    console.log(props);
-  });
+    setTheaterStyle(theater);
+    setTheaterStyle1(theater1);
+  };
 
   return (
     <div className="wrap">
+      <div className="image-theater-wrap" style={theaterStyle}>
+        <div className="image-theater-wrap-inner" style={theaterStyle1}></div>
+      </div>
       <div
         className="image-wrap"
         style={{ width: props.size.small, height: props.size.small }}
+        onMouseMove={(e) => {
+          showTheater(e);
+          let left = e.clientX;
+          let top = e.clientY;
+          let width = 100;
+          let height = 100;
+          let lens = { ...lensStyle };
+
+          if (top + height > props.size.small) {
+            let d1 = top - height / 2;
+            let d2 = props.size.small - height;
+            lens.top = d1 > d2 ? d2 : d1;
+            // console.log(
+            //   "condition 1",
+            //   top + height > props.size.small,
+            //   "top=>",
+            //   top,
+            //   "height=>",
+            //   height,
+            //   "top + height=>",
+            //   top + height,
+            //   "props.size.small=>",
+            //   props.size.small,
+            //   "lens.top =>",
+            //   lens.top
+            // );
+          } else {
+            if (top < height / 2) {
+              lens.top = 0;
+
+              // console.log(
+              //   "condition 2",
+              //   top < height,
+              //   "top=>",
+              //   top,
+              //   "height=>",
+              //   height
+              // );
+            } else {
+              lens.top = top - height / 2;
+
+              // console.log("condition 3");
+            }
+          }
+
+          if (left + width > props.size.small) {
+            let d3 = left - width / 2;
+            let d4 = props.size.small - width;
+            lens.left = d3 > d4 ? d4 : d3;
+          } else {
+            if (left < width / 2) {
+              lens.left = 0;
+            } else {
+              lens.left = left - width / 2;
+            }
+          }
+
+          setlensStyle(lens);
+        }}
+        onMouseOut={(e) => {}}
       >
         <img className="image-wrap-image" src={getSmallImage()}></img>
+        <div className="image-lens-wrap" style={lensStyle}></div>
       </div>
       <div
         className="thumb-wrap"
@@ -103,6 +178,7 @@ function Zoom(props) {
           {props.images.map((img, index) => {
             return (
               <div
+                key={index}
                 style={{
                   minWidth: props.size.thumb,
                   minHeight: props.size.thumb,
@@ -136,9 +212,9 @@ Zoom.defaultProps = {
     },
     {
       thumb:
-        "https://rukminim1.flixcart.com/image/128/128/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
+        "https://rukminim2.flixcart.com/image/612/612/kuef2q80/role-play-toy/0/h/u/princess-set-20-glowstaar-5-original-imag7j93aup8waha.jpeg?q=70",
       small:
-        "https://rukminim1.flixcart.com/image/416/416/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
+        "https://rukminim2.flixcart.com/image/612/612/kuef2q80/role-play-toy/0/h/u/princess-set-20-glowstaar-5-original-imag7j93aup8waha.jpeg?q=70",
       big: "https://rukminim1.flixcart.com/image/832/832/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
     },
     {
@@ -171,14 +247,14 @@ Zoom.defaultProps = {
     },
     {
       thumb:
-        "https://rukminim1.flixcart.com/image/128/128/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
+        "https://st.hzcdn.com/simgs/pictures/bedrooms/apartment-401-abhishek-shah-img~59719abc0e8abd3a_3-3062-1-51280c9.jpg",
       small:
         "https://rukminim1.flixcart.com/image/416/416/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
       big: "https://rukminim1.flixcart.com/image/832/832/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
     },
     {
       thumb:
-        "https://rukminim1.flixcart.com/image/128/128/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
+        "https://rukminim2.flixcart.com/image/500/500/kmmcrrk0/mobile/z/g/b/8-rmx3085-realme-original-imagfgpgzg9kp9hg.jpeg?q=70",
       small:
         "https://rukminim1.flixcart.com/image/416/416/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
       big: "https://rukminim1.flixcart.com/image/832/832/kjym9ow0/television/e/c/i/42path2121-42path2121-thomson-original-imafzff3hhm2x7dh.jpeg?q=70",
