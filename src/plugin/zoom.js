@@ -18,10 +18,8 @@ function Zoom(props) {
     left: 0,
   });
   const [theaterStyle1, setTheaterStyle1] = useState({
-    width: 100,
-    height: 100,
-    top: 0,
-    left: 0,
+    width: 800,
+    height: 800,
   });
   useEffect(() => {
     // console.log(props);
@@ -73,9 +71,11 @@ function Zoom(props) {
     //left
     theater.left = left;
     theater.top = 0;
-    theater1.backgroundImage = `url('${getBigImage()}')`;
-    theater1.transform = `translate3d(${lensleft}px, ${lenstop}px, 29px)`;
-
+    // theater.backgroundImage = `url('${getBigImage()}')`;
+    theater1.transform = `translate3d(${-lensleft}px, ${-lenstop}px, 29px)`;
+    //width
+    theater1.width = 3 * props.size.small;
+    theater1.height = 3 * props.size.small;
     setTheaterStyle(theater);
     setTheaterStyle1(theater1);
   };
@@ -83,7 +83,7 @@ function Zoom(props) {
   return (
     <div className="wrap">
       <div className="image-theater-wrap" style={theaterStyle}>
-        <div className="image-theater-wrap-inner" style={theaterStyle1}></div>
+        <img style={theaterStyle1} src={getBigImage()} alt="" />
       </div>
       <div
         className="image-wrap"
