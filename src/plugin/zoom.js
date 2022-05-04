@@ -1,9 +1,10 @@
-import React, { PropTypes, useEffect, useState } from "react";
+import React, { PropTypes, useEffect, useState, useRef } from "react";
 import "./zoom.css";
 import Style from "./style";
 import LeftButton from "./components/LeftButton";
 import RightButton from "./components/RightButton";
 function Zoom(props) {
+  const lensEl = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lensStyle, setlensStyle] = useState({
     width: 100,
@@ -11,6 +12,12 @@ function Zoom(props) {
     top: 0,
     left: 0,
   });
+  const lensOriStyle = {
+    width: 100,
+    height: 100,
+    top: 0,
+    left: 0,
+  };
   const [theaterStyle, setTheaterStyle] = useState({
     width: 100,
     height: 100,
@@ -56,28 +63,95 @@ function Zoom(props) {
     }
   };
   const showTheater = (e) => {
-    let lensleft = e.clientX;
-    let lenstop = e.clientY;
+    let { offsetLeft: lensElLeft, offsetTop: lensElTop } = lensEl.current;
+    let left = e.clientX;
+    let top = e.clientY;
+    let width = lensStyle.width;
+    let height = lensStyle.height;
+    let lens = { ...lensStyle };
+
+    if (top + height > props.size.small) {
+      let d1 = top - height / 2;
+      let d2 = props.size.small - height;
+      lens.top = d1 > d2 ? d2 : d1;
+    } else {
+      if (top < height / 2) {
+        lens.top = 0;
+      } else {
+        lens.top = top - height / 2;
+      }
+    }
+
+    if (left + width > props.size.small) {
+      let d3 = left - width / 2;
+      let d4 = props.size.small - width;
+      lens.left = d3 > d4 ? d4 : d3;
+    } else {
+      if (left < width / 2) {
+        lens.left = 0;
+      } else {
+        lens.left = left - width / 2;
+      }
+    }
+
+    //---------
+    let lensleft = lensElLeft;
+    let lenstop = lensElTop;
+    console.log("lensleft=>", lensleft, "lenstop=>", lenstop);
     let windowiInnerHeight =
       window.innerHeight > 600 ? 600 : window.innerHeight;
     let windowiInnerWidth = window.innerWidth > 1000 ? 1000 : window.innerWidth;
     windowiInnerWidth -= props.size.small;
-    let left = props.size.small;
+    let theaterLeft = props.size.small;
     let theater = { ...theaterStyle };
     let theater1 = { ...theaterStyle1 };
     //width
     theater.width = windowiInnerWidth;
     theater.height = windowiInnerHeight;
+    let theaterScaleRatio = theater.width / theater.height;
+    theaterScaleRatio = Math.round(theaterScaleRatio * 100) / 100;
+    if (theaterScaleRatio !== 1) {
+      if (1.2 < theaterScaleRatio || theaterScaleRatio < 0.9) {
+        if (theater.width > theater.height) {
+          lens.height =
+            lensOriStyle.height *
+            (theaterScaleRatio > 2
+              ? theaterScaleRatio / 2 - 1
+              : theaterScaleRatio - 1);
+          lens.width = lensOriStyle.width;
+        } else {
+          lens.width = lensOriStyle.width * theaterScaleRatio;
+          lens.height = lensOriStyle.height;
+        }
+      }
+    }
+
     //left
-    theater.left = left;
+    theater.left = theaterLeft;
     theater.top = 0;
     // theater.backgroundImage = `url('${getBigImage()}')`;
-    theater1.transform = `translate3d(${-lensleft}px, ${-lenstop}px, 29px)`;
+    theater1.transform = ` translate3d(${-4 * lensleft}px, ${
+      -4 * lenstop
+    }px, 0px)`;
     //width
-    theater1.width = 3 * props.size.small;
-    theater1.height = 3 * props.size.small;
+    theater1.width = 4 * props.size.small;
+    theater1.height = 4 * props.size.small;
+
     setTheaterStyle(theater);
     setTheaterStyle1(theater1);
+    setlensStyle(lens);
+    console.log(
+      "theaterScaleRatio=>",
+      theaterScaleRatio,
+      "props.size.small=>",
+      props.size.small,
+      "theater1.width=>",
+      theater1,
+      "theaterStyle=>",
+      theaterStyle,
+      "lens=>",
+      lens
+    );
   };
 
   return (
@@ -90,67 +164,11 @@ function Zoom(props) {
         style={{ width: props.size.small, height: props.size.small }}
         onMouseMove={(e) => {
           showTheater(e);
-          let left = e.clientX;
-          let top = e.clientY;
-          let width = 100;
-          let height = 100;
-          let lens = { ...lensStyle };
-
-          if (top + height > props.size.small) {
-            let d1 = top - height / 2;
-            let d2 = props.size.small - height;
-            lens.top = d1 > d2 ? d2 : d1;
-            // console.log(
-            //   "condition 1",
-            //   top + height > props.size.small,
-            //   "top=>",
-            //   top,
-            //   "height=>",
-            //   height,
-            //   "top + height=>",
-            //   top + height,
-            //   "props.size.small=>",
-            //   props.size.small,
-            //   "lens.top =>",
-            //   lens.top
-            // );
-          } else {
-            if (top < height / 2) {
-              lens.top = 0;
-
-              // console.log(
-              //   "condition 2",
-              //   top < height,
-              //   "top=>",
-              //   top,
-              //   "height=>",
-              //   height
-              // );
-            } else {
-              lens.top = top - height / 2;
-
-              // console.log("condition 3");
-            }
-          }
-
-          if (left + width > props.size.small) {
-            let d3 = left - width / 2;
-            let d4 = props.size.small - width;
-            lens.left = d3 > d4 ? d4 : d3;
-          } else {
-            if (left < width / 2) {
-              lens.left = 0;
-            } else {
-              lens.left = left - width / 2;
-            }
-          }
-
-          setlensStyle(lens);
         }}
         onMouseOut={(e) => {}}
       >
         <img className="image-wrap-image" src={getSmallImage()}></img>
-        <div className="image-lens-wrap" style={lensStyle}></div>
+        <div className="image-lens-wrap" ref={lensEl} style={lensStyle}></div>
       </div>
       <div
         className="thumb-wrap"
@@ -160,12 +178,12 @@ function Zoom(props) {
         }}
       >
         {props.navigation.left && (
-          <div class="navigation-button-h left" onClick={goLeft}>
+          <div className="navigation-button-h left" onClick={goLeft}>
             <LeftButton />
           </div>
         )}
         {props.navigation.right && (
-          <div class="navigation-button-h right" onClick={goRight}>
+          <div className="navigation-button-h right" onClick={goRight}>
             <RightButton />
           </div>
         )}
